@@ -2,7 +2,9 @@ import {
   Column,
   Entity,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm'
+import { Usuario } from '../../usuario/entities/usuario.entity'
 
 @Entity()
 export class Cargo {
@@ -14,4 +16,7 @@ export class Cargo {
 
   @Column({ default: true })
   activo: boolean
+
+  @OneToMany(() => Usuario, (usuario) => usuario.cargo)
+  usuarios: Usuario[]
 }

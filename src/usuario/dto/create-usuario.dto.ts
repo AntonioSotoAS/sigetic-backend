@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Length } from 'class-validator'
+import { IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, Length } from 'class-validator'
 import { RolUsuario } from '../roles.enum'
 
 export class CreateUsuarioDto {
@@ -37,4 +37,12 @@ export class CreateUsuarioDto {
 
   @IsOptional()
   sede_id?: number
+
+  @IsOptional()
+  @IsNumber()
+  dependencia_id?: number
+
+  @IsOptional()
+  @IsNumber()
+  cargo_id?: number
 }

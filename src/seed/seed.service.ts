@@ -9,7 +9,7 @@ import { Categoria } from '../categoria/entities/categoria.entity'
 import { Subcategoria } from '../subcategoria/entities/subcategoria.entity'
 import { Ticket } from '../ticket/entities/ticket.entity'
 import { ComentarioTicket, TipoComentario } from '../comentario-ticket/entities/comentario-ticket.entity'
-import { usuarioData, sedeData, cargoData, dependenciaData, categoriaData, subcategoriaData, ticketData } from './data'
+import { usuarioData, sedeData, cargoData, dependenciaData, categoriaData, subcategoriaData } from './data'
 import { RolUsuario } from '../usuario/roles.enum'
 import { PrioridadTicket, EstadoTicket } from '../ticket/entities/ticket.entity'
 import * as bcrypt from 'bcrypt'
@@ -38,6 +38,14 @@ export class SeedService {
   async seed() {
     console.log('🌱 Iniciando seed de datos...')
 
+    // Verificar si ya existen datos
+    const existingSedes = await this.sedeRepo.count()
+    const existingUsuarios = await this.usuarioRepo.count()
+    if (existingSedes > 0 || existingUsuarios > 0) {
+      console.log('⚠️ Los datos ya existen en la base de datos. Saltando seed...')
+      return
+    }
+
     // Seed de Sedes
     console.log('📍 Creando sedes...')
     const sedes = await this.seedSedes()
@@ -61,10 +69,6 @@ export class SeedService {
     // Seed de Subcategorías
     console.log('📋 Creando subcategorías...')
     await this.seedSubcategorias(categorias)
-
-    // Seed de Tickets
-    console.log('🎫 Creando tickets...')
-    await this.seedTickets(usuarios, dependencias, sedes)
 
     console.log('✅ Seed completado exitosamente!')
   }
@@ -138,54 +142,4 @@ export class SeedService {
     }
   }
 
-  private async seedTickets(usuarios: Usuario[], dependencias: Dependencia[], sedes: Sede[]) {
-    // Obtener categorías y subcategorías para las relaciones
-    const categorias = await this.categoriaRepo.find()
-    const subcategorias = await this.subcategoriaRepo.find()
-
-    for (const ticketItem of ticketData) {
-      // Encontrar las entidades correspondientes
-      const user = usuarios.find(u => u.id === ticketItem.user_id)
-      const dependencia = dependencias.find(d => d.id === ticketItem.dependencia_id)
-      const sede = sedes.find(s => s.id === ticketItem.sede_id)
-      const tecnico = ticketItem.tecnico_id ? usuarios.find(u => u.id === ticketItem.tecnico_id) : null
-      const categoria = ticketItem.categoria_id ? categorias.find(c => c.id === ticketItem.categoria_id) : null
-      const subcategoria = ticketItem.subcategoria_id ? subcategorias.find(s => s.id === ticketItem.subcategoria_id) : null
-
-      if (user && dependencia && sede) {
-        const ticket = this.ticketRepo.create({
-          titulo: ticketItem.titulo,
-          descripcion: ticketItem.descripcion,
-          prioridad: ticketItem.prioridad as PrioridadTicket,
-          estado: ticketItem.estado as EstadoTicket,
-          user: user,
-          dependencia: dependencia,
-          sede: sede,
-          categoria: categoria,
-          subcategoria: subcategoria,
-          tecnico: tecnico,
-          fecha_asignacion: ticketItem.fecha_asignacion,
-          fecha_resolucion: ticketItem.fecha_resolucion,
-          fecha_cierre: ticketItem.fecha_cierre,
-        } as any)
-        const savedTicket = await this.ticketRepo.save(ticket)
-
-        // Crear comentarios si existen
-        if (ticketItem.comentarios_ticket && ticketItem.comentarios_ticket.length > 0) {
-          for (const comentarioItem of ticketItem.comentarios_ticket) {
-            const comentarioUser = usuarios.find(u => u.id === comentarioItem.user_id)
-            if (comentarioUser) {
-              const comentario = this.comentarioRepo.create({
-                ticket: savedTicket,
-                user: comentarioUser,
-                comentario: comentarioItem.comentario,
-                tipo: comentarioItem.tipo as TipoComentario,
-              } as any)
-              await this.comentarioRepo.save(comentario)
-            }
-          }
-        }
-      }
-    }
-  }
 } 

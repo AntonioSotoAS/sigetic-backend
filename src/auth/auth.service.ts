@@ -27,12 +27,13 @@ export class AuthService {
     const payload = { 
       sub: usuario.id, 
       rol: usuario.rol,
+      cargo: usuario.cargo?.nombre,
       sedeId: usuario.sede?.id,
       correo: usuario.correo
     }
     
-    // Generar access token (15 minutos)
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' })
+    // Generar access token (30 días)
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '30d' })
     
     // Generar refresh token (7 días)
     const refreshToken = this.jwtService.sign(
@@ -52,6 +53,7 @@ export class AuthService {
         apellidos_paterno: usuario.apellidos_paterno,
         apellidos_materno: usuario.apellidos_materno,
         correo: usuario.correo,
+        cargo: usuario.cargo,
         dni: usuario.dni,
         telefono: usuario.telefono,
         rol: usuario.rol,
@@ -85,7 +87,7 @@ export class AuthService {
         correo: usuario.correo
       }
       
-      const newAccessToken = this.jwtService.sign(newPayload, { expiresIn: '15m' })
+      const newAccessToken = this.jwtService.sign(newPayload, { expiresIn: '30d' })
 
       return {
         access_token: newAccessToken,

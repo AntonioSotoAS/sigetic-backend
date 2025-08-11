@@ -17,7 +17,17 @@ async function bootstrap() {
     origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type', 
+      'Authorization', 
+      'x-user-id',
+      'x-requested-with',
+      'accept',
+      'origin',
+      'access-control-request-method',
+      'access-control-request-headers'
+    ],
+    exposedHeaders: ['set-cookie'],
   })
 
   // Configurar cookie-parser

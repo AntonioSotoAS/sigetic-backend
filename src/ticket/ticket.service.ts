@@ -219,14 +219,25 @@ export class TicketService {
       ticket.tecnico = tecnico
     }
 
-    // Actualizar fechas según el estado
-    if (dto.estado === EstadoTicket.ASIGNADO && !ticket.fecha_asignacion) {
+    // Manejar fechas explícitas del DTO
+    if (dto.fecha_asignacion) {
+      ticket.fecha_asignacion = new Date(dto.fecha_asignacion)
+    }
+    if (dto.fecha_resolucion) {
+      ticket.fecha_resolucion = new Date(dto.fecha_resolucion)
+    }
+    if (dto.fecha_cierre) {
+      ticket.fecha_cierre = new Date(dto.fecha_cierre)
+    }
+
+    // Actualizar fechas automáticamente según el estado (solo si no se proporcionaron explícitamente)
+    if (dto.estado === EstadoTicket.ASIGNADO && !ticket.fecha_asignacion && !dto.fecha_asignacion) {
       ticket.fecha_asignacion = new Date()
     }
-    if (dto.estado === EstadoTicket.RESUELTO && !ticket.fecha_resolucion) {
+    if (dto.estado === EstadoTicket.RESUELTO && !ticket.fecha_resolucion && !dto.fecha_resolucion) {
       ticket.fecha_resolucion = new Date()
     }
-    if (dto.estado === EstadoTicket.CERRADO && !ticket.fecha_cierre) {
+    if (dto.estado === EstadoTicket.CERRADO && !ticket.fecha_cierre && !dto.fecha_cierre) {
       ticket.fecha_cierre = new Date()
     }
 
@@ -291,6 +302,14 @@ export class TicketService {
 
   // ✅ Obtener tickets sin asignar de mi sede
   async findSinAsignarMiSede(user: Usuario): Promise<Ticket[]> {
+    console.log('🔍 findSinAsignarMiSede - Usuario:', {
+      id: user.id,
+      nombres: user.nombres,
+      rol: user.rol,
+      sedeId: user.sede?.id,
+      sedeNombre: user.sede?.nombre
+    })
+
     const query = this.repo.createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.user', 'user')
       .leftJoinAndSelect('ticket.dependencia', 'dependencia')
@@ -304,15 +323,37 @@ export class TicketService {
 
     // Filtro por sede del usuario (todos los roles ven solo su sede)
     query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+    console.log('🔍 findSinAsignarMiSede - Filtro por sede aplicado:', user.sede.id)
 
-    return await query
+    const tickets = await query
       .orderBy('ticket.prioridad', 'DESC')
       .addOrderBy('ticket.created_at', 'ASC')
       .getMany()
+    
+    console.log('🔍 findSinAsignarMiSede - Tickets encontrados:', tickets.length)
+    
+    if (tickets.length > 0) {
+      console.log('🔍 findSinAsignarMiSede - Primer ticket:', {
+        id: tickets[0].id,
+        titulo: tickets[0].titulo,
+        sedeId: tickets[0].sede?.id,
+        tecnicoId: tickets[0].tecnico?.id
+      })
+    }
+
+    return tickets
   }
 
   // ✅ Obtener tickets sin asignar (método original para superadmin)
   async findSinAsignar(user: Usuario): Promise<Ticket[]> {
+    console.log('🔍 findSinAsignar - Usuario:', {
+      id: user.id,
+      nombres: user.nombres,
+      rol: user.rol,
+      sedeId: user.sede?.id,
+      sedeNombre: user.sede?.nombre
+    })
+
     const query = this.repo.createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.user', 'user')
       .leftJoinAndSelect('ticket.dependencia', 'dependencia')
@@ -325,9 +366,24 @@ export class TicketService {
     // Filtro por sede según rol del usuario
     if (user.rol !== 'superadmin') {
       query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+      console.log('🔍 findSinAsignar - Filtro por sede aplicado:', user.sede.id)
+    } else {
+      console.log('🔍 findSinAsignar - Superadmin, sin filtro de sede')
     }
 
-    return await query.orderBy('ticket.prioridad', 'DESC').getMany()
+    const tickets = await query.orderBy('ticket.prioridad', 'DESC').getMany()
+    console.log('🔍 findSinAsignar - Tickets encontrados:', tickets.length)
+    
+    if (tickets.length > 0) {
+      console.log('🔍 findSinAsignar - Primer ticket:', {
+        id: tickets[0].id,
+        titulo: tickets[0].titulo,
+        sedeId: tickets[0].sede?.id,
+        tecnicoId: tickets[0].tecnico?.id
+      })
+    }
+
+    return tickets
   }
 
   // ✅ Obtener mis tickets (usuario actual)
@@ -341,6 +397,13 @@ export class TicketService {
 
   // ✅ Obtener tickets asignados a un técnico
   async findTicketsAsignados(tecnicoId: number, user: Usuario): Promise<Ticket[]> {
+    console.log('🔍 findTicketsAsignados - Parámetros:', {
+      tecnicoId,
+      userId: user.id,
+      userRol: user.rol,
+      userSedeId: user.sede?.id
+    })
+
     const query = this.repo.createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.user', 'user')
       .leftJoinAndSelect('ticket.dependencia', 'dependencia')
@@ -350,8 +413,124 @@ export class TicketService {
     // Filtro por sede según rol del usuario
     if (user.rol !== 'superadmin') {
       query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+      console.log('🔍 findTicketsAsignados - Filtro por sede aplicado:', user.sede.id)
+    } else {
+      console.log('🔍 findTicketsAsignados - Superadmin, sin filtro de sede')
     }
 
-    return await query.orderBy('ticket.created_at', 'DESC').getMany()
+    const tickets = await query.orderBy('ticket.created_at', 'DESC').getMany()
+    console.log('🔍 findTicketsAsignados - Tickets encontrados:', tickets.length)
+    
+    if (tickets.length > 0) {
+      console.log('🔍 findTicketsAsignados - Primer ticket:', {
+        id: tickets[0].id,
+        titulo: tickets[0].titulo,
+        tecnicoId: tickets[0].tecnico?.id,
+        sedeId: tickets[0].sede?.id
+      })
+    }
+
+    return tickets
+  }
+
+  // ✅ Obtener mis tickets asignados (para técnicos)
+  async findMisTicketsAsignados(user: Usuario): Promise<Ticket[]> {
+    const query = this.repo.createQueryBuilder('ticket')
+      .leftJoinAndSelect('ticket.user', 'user')
+      .leftJoinAndSelect('ticket.dependencia', 'dependencia')
+      .leftJoinAndSelect('ticket.sede', 'sede')
+      .leftJoinAndSelect('ticket.categoria', 'categoria')
+      .leftJoinAndSelect('ticket.subcategoria', 'subcategoria')
+      .where('ticket.tecnico_id = :tecnicoId', { tecnicoId: user.id })
+
+    // Filtro por sede según rol del usuario
+    if (user.rol !== 'superadmin') {
+      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+    }
+
+    return await query
+      .orderBy('ticket.prioridad', 'DESC')
+      .addOrderBy('ticket.created_at', 'ASC')
+      .getMany()
+  }
+
+  // ✅ Obtener mis tickets creados (para usuarios regulares)
+  async findMisTicketsCreados(user: Usuario): Promise<Ticket[]> {
+    const query = this.repo.createQueryBuilder('ticket')
+      .leftJoinAndSelect('ticket.dependencia', 'dependencia')
+      .leftJoinAndSelect('ticket.sede', 'sede')
+      .leftJoinAndSelect('ticket.categoria', 'categoria')
+      .leftJoinAndSelect('ticket.subcategoria', 'subcategoria')
+      .leftJoinAndSelect('ticket.tecnico', 'tecnico')
+      .where('ticket.user_id = :userId', { userId: user.id })
+
+    // Filtro por sede según rol del usuario
+    if (user.rol !== 'superadmin') {
+      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+    }
+
+    return await query
+      .orderBy('ticket.created_at', 'DESC')
+      .getMany()
+  }
+
+  // 🔍 Método de debug para verificar tickets en la BD
+  async debugTickets(user: Usuario): Promise<any> {
+    console.log('🔍 DEBUG - Verificando tickets en la base de datos...')
+    
+    // Contar todos los tickets
+    const totalTickets = await this.repo.count()
+    console.log('🔍 DEBUG - Total de tickets en BD:', totalTickets)
+    
+    // Contar tickets por sede
+    const ticketsPorSede = await this.repo
+      .createQueryBuilder('ticket')
+      .leftJoinAndSelect('ticket.sede', 'sede')
+      .select(['sede.id', 'sede.nombre', 'COUNT(ticket.id) as count'])
+      .groupBy('sede.id')
+      .addGroupBy('sede.nombre')
+      .getRawMany()
+    
+    console.log('🔍 DEBUG - Tickets por sede:', ticketsPorSede)
+    
+    // Contar tickets sin asignar usando query builder
+    const ticketsSinAsignar = await this.repo
+      .createQueryBuilder('ticket')
+      .where('ticket.tecnico_id IS NULL')
+      .getCount()
+    console.log('🔍 DEBUG - Tickets sin asignar:', ticketsSinAsignar)
+    
+    // Contar tickets por estado
+    const ticketsPorEstado = await this.repo
+      .createQueryBuilder('ticket')
+      .select(['ticket.estado', 'COUNT(ticket.id) as count'])
+      .groupBy('ticket.estado')
+      .getRawMany()
+    
+    console.log('🔍 DEBUG - Tickets por estado:', ticketsPorEstado)
+    
+    // Verificar tickets de la sede del usuario
+    if (user.sede) {
+      const ticketsDeMiSede = await this.repo.count({
+        where: { sede: { id: user.sede.id } }
+      })
+      console.log('🔍 DEBUG - Tickets de mi sede:', ticketsDeMiSede)
+      
+      const ticketsSinAsignarMiSede = await this.repo
+        .createQueryBuilder('ticket')
+        .where('ticket.sede_id = :sedeId', { sedeId: user.sede.id })
+        .andWhere('ticket.tecnico_id IS NULL')
+        .andWhere('ticket.estado = :estado', { estado: 'pendiente' })
+        .getCount()
+      console.log('🔍 DEBUG - Tickets sin asignar de mi sede:', ticketsSinAsignarMiSede)
+    }
+    
+    return {
+      totalTickets,
+      ticketsPorSede,
+      ticketsSinAsignar,
+      ticketsPorEstado,
+      userSede: user.sede
+    }
   }
 }

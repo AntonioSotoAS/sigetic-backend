@@ -8,6 +8,7 @@ import {
 } from 'typeorm'
 import { Sede } from '../../sede/entities/sede.entity'
 import { Dependencia } from '../../dependencia/entities/dependencia.entity'
+import { Cargo } from '../../cargo/entities/cargo.entity'
 import { RolUsuario } from '../roles.enum'
 import { Ticket } from '../../ticket/entities/ticket.entity'
 
@@ -50,6 +51,10 @@ export class Usuario {
   @ManyToOne(() => Dependencia, (dependencia) => dependencia.usuarios, { eager: true })
   @JoinColumn({ name: 'dependencia_id' })
   dependencia: Dependencia
+
+  @ManyToOne(() => Cargo, { eager: true })
+  @JoinColumn({ name: 'cargo_id' })
+  cargo: Cargo
 
   @Column({ nullable: true })
   foto_perfil: string

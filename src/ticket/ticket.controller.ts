@@ -47,6 +47,16 @@ export class TicketController {
     return this.ticketService.findMisTickets(user)
   }
 
+  @Get('mis-tickets-asignados')
+  findMisTicketsAsignados(@GetUser() user: Usuario) {
+    return this.ticketService.findMisTicketsAsignados(user)
+  }
+
+  @Get('mis-tickets-creados')
+  findMisTicketsCreados(@GetUser() user: Usuario) {
+    return this.ticketService.findMisTicketsCreados(user)
+  }
+
   @Get('asignados/:tecnicoId')
   findTicketsAsignados(@Param('tecnicoId') tecnicoId: string, @GetUser() user: Usuario) {
     return this.ticketService.findTicketsAsignados(+tecnicoId, user)
@@ -69,5 +79,10 @@ export class TicketController {
   @Delete(':id')
   remove(@Param('id') id: string, @GetUser() user: Usuario) {
     return this.ticketService.delete(+id, user)
+  }
+
+  @Get('debug/tickets')
+  debugTickets(@GetUser() user: Usuario) {
+    return this.ticketService.debugTickets(user)
   }
 }

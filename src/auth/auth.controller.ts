@@ -37,12 +37,12 @@ export class AuthController {
     // Configurar cookies según el frontend Next.js
     const isProduction = process.env.NODE_ENV === 'production'
     
-    // Access token cookie (15 minutos)
+    // Access token cookie (30 días)
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: isProduction, // Solo HTTPS en producción
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutos
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
       path: '/',
     })
     
@@ -60,7 +60,7 @@ export class AuthController {
     // También mantener la cookie 'token' para compatibilidad con Socket.IO
     res.cookie('token', result.access_token, {
       httpOnly: true,
-      maxAge: 15 * 60 * 1000, // 15 minutos
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
       sameSite: 'lax',
       secure: isProduction,
     })
@@ -120,13 +120,13 @@ export class AuthController {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'strict',
-        maxAge: 15 * 60 * 1000,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
         path: '/',
       })
       
       res.cookie('token', result.access_token, {
         httpOnly: true,
-        maxAge: 15 * 60 * 1000,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
         sameSite: 'lax',
         secure: isProduction,
       })
