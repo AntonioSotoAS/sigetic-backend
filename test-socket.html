@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Socket.IO - SIGETIC</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .error { background-color: #fff3cd; color: #856404; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .event {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .event.created { border-left-color: #28a745; }
+        .event.updated { border-left-color: #ffc107; }
+        .event.assigned { border-left-color: #17a2b8; }
+        .event.status { border-left-color: #6f42c1; }
+        .event.unassigned { border-left-color: #fd7e14; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Socket.IO - SIGETIC Backend</h1>
+        
+        <div id="status" class="status disconnected">
+            ❌ Desconectado
+        </div>
+
+        <div>
+            <h3>🔐 Autenticación</h3>
+            <input type="text" id="token" placeholder="JWT Token" />
+            <button onclick="connect()">Conectar</button>
+            <button onclick="disconnect()">Desconectar</button>
+        </div>
+
+        <div>
+            <h3>📊 Eventos Recibidos</h3>
+            <div id="log" class="log"></div>
+        </div>
+
+        <div>
+            <h3>🧹 Utilidades</h3>
+            <button onclick="clearLog()">Limpiar Log</button>
+            <button onclick="testConnection()">Probar Conexión</button>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let isConnected = false;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event ${type}`;
+            eventDiv.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logDiv.appendChild(eventDiv);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(connected, message) {
+            const statusDiv = document.getElementById('status');
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusDiv.innerHTML = '✅ ' + message;
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusDiv.innerHTML = '❌ ' + message;
+            }
+        }
+
+        function connect() {
+            const token = document.getElementById('token').value.trim();
+            
+            if (!token) {
+                alert('Por favor ingresa un JWT token válido');
+                return;
+            }
+
+            if (socket) {
+                socket.disconnect();
+            }
+
+            log('🔌 Intentando conectar...', 'info');
+
+            socket = io('http://localhost:3001/realtime', {
+                auth: {
+                    token: token
+                },
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                isConnected = true;
+                updateStatus(true, 'Conectado al servidor Socket.IO');
+                log('✅ Conectado exitosamente al servidor', 'info');
+            });
+
+            socket.on('disconnect', () => {
+                isConnected = false;
+                updateStatus(false, 'Desconectado del servidor');
+                log('❌ Desconectado del servidor', 'info');
+            });
+
+            socket.on('connect_error', (error) => {
+                isConnected = false;
+                updateStatus(false, 'Error de conexión');
+                log(`❌ Error de conexión: ${error.message}`, 'error');
+            });
+
+            // Eventos de tickets
+            socket.on('ticket.created', (data) => {
+                log(`🎫 Nuevo ticket creado: #${data.id} - ${data.titulo}`, 'created');
+                console.log('Ticket creado:', data);
+            });
+
+            socket.on('ticket.updated', (data) => {
+                log(`🔄 Ticket actualizado: #${data.id} - ${data.titulo}`, 'updated');
+                console.log('Ticket actualizado:', data);
+            });
+
+            socket.on('ticket.assigned', (data) => {
+                log(`👨‍💻 Ticket asignado: #${data.id} - ${data.titulo}`, 'assigned');
+                console.log('Ticket asignado:', data);
+            });
+
+            socket.on('ticket.status_changed', (data) => {
+                log(`📊 Estado cambiado: #${data.id} - ${data.estado}`, 'status');
+                console.log('Estado cambiado:', data);
+            });
+
+            socket.on('tickets:unassigned', (data) => {
+                log(`📋 Tickets sin asignar: ${data.action}`, 'unassigned');
+                console.log('Tickets sin asignar:', data);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                isConnected = false;
+                updateStatus(false, 'Desconectado manualmente');
+                log('🔌 Desconectado manualmente', 'info');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function testConnection() {
+            if (!isConnected) {
+                alert('No estás conectado. Conecta primero con un token válido.');
+                return;
+            }
+            
+            log('🧪 Probando conexión...', 'info');
+            socket.emit('ping', { message: 'Test desde frontend' });
+        }
+
+        // Auto-conectar si hay token en localStorage
+        window.onload = function() {
+            const savedToken = localStorage.getItem('sigetic_token');
+            if (savedToken) {
+                document.getElementById('token').value = savedToken;
+                log('🔑 Token encontrado en localStorage', 'info');
+            }
+        };
+
+        // Guardar token en localStorage
+        document.getElementById('token').addEventListener('change', function() {
+            localStorage.setItem('sigetic_token', this.value);
+        });
+    </script>
+</body>
+</html>
+
