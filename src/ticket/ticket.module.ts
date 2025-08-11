@@ -10,6 +10,7 @@ import { Categoria } from '../categoria/entities/categoria.entity'
 import { Subcategoria } from '../subcategoria/entities/subcategoria.entity'
 import { ComentarioTicket } from '../comentario-ticket/entities/comentario-ticket.entity'
 import { RealtimeModule } from '../realtime/realtime.module'
+import { UsuarioModule } from '../usuario/usuario.module'
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RealtimeModule } from '../realtime/realtime.module'
       ComentarioTicket,
     ]),
     RealtimeModule,
+    UsuarioModule,
   ],
   controllers: [TicketController],
   providers: [TicketService],

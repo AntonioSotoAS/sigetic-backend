@@ -53,13 +53,15 @@ export class AuthService {
         apellidos_paterno: usuario.apellidos_paterno,
         apellidos_materno: usuario.apellidos_materno,
         correo: usuario.correo,
-        cargo: usuario.cargo,
         dni: usuario.dni,
         telefono: usuario.telefono,
         rol: usuario.rol,
         sede: usuario.sede,
+        cargo: usuario.cargo,
         foto_perfil: usuario.foto_perfil,
         activo: usuario.activo,
+        password_resetada: usuario.password_resetada,
+        sede_soporte: usuario.sede_soporte,
       }
     }
   }
@@ -83,6 +85,7 @@ export class AuthService {
       const newPayload = { 
         sub: usuario.id, 
         rol: usuario.rol,
+        cargo: usuario.cargo?.nombre,
         sedeId: usuario.sede?.id,
         correo: usuario.correo
       }
@@ -101,8 +104,11 @@ export class AuthService {
           telefono: usuario.telefono,
           rol: usuario.rol,
           sede: usuario.sede,
+          cargo: usuario.cargo,
           foto_perfil: usuario.foto_perfil,
           activo: usuario.activo,
+          password_resetada: usuario.password_resetada,
+          sede_soporte: usuario.sede_soporte,
         }
       }
     } catch (error) {

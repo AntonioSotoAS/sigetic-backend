@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator'
+import { IsString, IsOptional, IsBoolean, IsNumber } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class CreateDependenciaDto {
@@ -26,4 +26,12 @@ export class CreateDependenciaDto {
   @IsOptional()
   @IsBoolean()
   activo?: boolean
+
+  @ApiProperty({
+    description: 'ID de la sede a la que pertenece la dependencia',
+    example: 1,
+    required: true
+  })
+  @IsNumber()
+  sede_id: number
 }

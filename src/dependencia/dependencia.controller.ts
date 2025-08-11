@@ -52,6 +52,14 @@ export class DependenciaController {
     return this.dependenciaService.findOne(id, user)
   }
 
+  @Get('sede/:sedeId')
+  findBySede(
+    @Param('sedeId', ParseIntPipe) sedeId: number,
+    @GetUser() user: Usuario,
+  ) {
+    return this.dependenciaService.findBySede(sedeId)
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(

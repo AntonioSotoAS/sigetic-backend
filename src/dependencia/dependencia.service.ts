@@ -6,12 +6,15 @@ import { CreateDependenciaDto } from './dto/create-dependencia.dto'
 import { UpdateDependenciaDto } from './dto/update-dependencia.dto'
 import { FilterDependenciaDto } from './dto/filter-dependencia.dto'
 import { Usuario } from '../usuario/entities/usuario.entity'
+import { Sede } from '../sede/entities/sede.entity'
 
 @Injectable()
 export class DependenciaService {
   constructor(
     @InjectRepository(Dependencia)
     private readonly repo: Repository<Dependencia>,
+    @InjectRepository(Sede)
+    private readonly sedeRepo: Repository<Sede>,
   ) {}
 
   async findAll(filters?: FilterDependenciaDto, user?: Usuario): Promise<{ data: Dependencia[]; total: number }> {
@@ -59,6 +62,15 @@ export class DependenciaService {
   }
 
   async create(createDependenciaDto: CreateDependenciaDto): Promise<Dependencia> {
+    // Verificar que la sede existe
+    const sede = await this.sedeRepo.findOne({
+      where: { id: createDependenciaDto.sede_id, activo: true }
+    })
+    
+    if (!sede) {
+      throw new NotFoundException(`Sede con ID ${createDependenciaDto.sede_id} no encontrada`)
+    }
+    
     const dependencia = this.repo.create({
       ...createDependenciaDto,
       activo: createDependenciaDto.activo ?? true,
@@ -92,5 +104,13 @@ export class DependenciaService {
     await this.repo.remove(dependencia)
     
     return { message: 'Dependencia eliminada permanentemente' }
+  }
+
+  // ✅ Obtener dependencias por sede
+  async findBySede(sedeId: number): Promise<Dependencia[]> {
+    return await this.repo.find({
+      where: { sede: { id: sedeId }, activo: true },
+      order: { nombre: 'ASC' }
+    })
   }
 }

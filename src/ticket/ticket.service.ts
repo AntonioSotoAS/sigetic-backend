@@ -16,6 +16,7 @@ import { UpdateTicketDto } from './dto/update-ticket.dto'
 import { FilterTicketDto } from './dto/filter-ticket.dto'
 import { PaginatedResponse } from '../common/dtos/pagination.dto'
 import { RealtimeService } from '../realtime/realtime.service'
+import { UsuarioService } from '../usuario/usuario.service'
 
 @Injectable()
 export class TicketService {
@@ -35,19 +36,21 @@ export class TicketService {
     @InjectRepository(ComentarioTicket)
     private readonly comentarioRepo: Repository<ComentarioTicket>,
     private readonly realtime: RealtimeService,
+    private readonly usuarioService: UsuarioService,
   ) {}
 
   // ✅ Listado paginado con filtros
   async findAll(filterDto: FilterTicketDto, user: Usuario): Promise<PaginatedResponse<Ticket>> {
-    const { limit = 10, offset = 0, search, estado, prioridad, categoria_id, subcategoria_id, dependencia_id, sede_id, tecnico_id, user_id } = filterDto
+    const { limit = 10, offset = 0, search, estado, prioridad, sede_id, dependencia_id, categoria_id, subcategoria_id } = filterDto
 
     const query = this.repo.createQueryBuilder('ticket')
-      .leftJoinAndSelect('ticket.user', 'user')
-      .leftJoinAndSelect('ticket.dependencia', 'dependencia')
       .leftJoinAndSelect('ticket.sede', 'sede')
+      .leftJoinAndSelect('ticket.dependencia', 'dependencia')
       .leftJoinAndSelect('ticket.categoria', 'categoria')
       .leftJoinAndSelect('ticket.subcategoria', 'subcategoria')
+      .leftJoinAndSelect('ticket.user', 'user')
       .leftJoinAndSelect('ticket.tecnico', 'tecnico')
+      .where('ticket.activo = :activo', { activo: true })
 
     // Filtro por búsqueda
     if (search) {
@@ -64,11 +67,21 @@ export class TicketService {
     if (subcategoria_id) query.andWhere('ticket.subcategoria_id = :subcategoria_id', { subcategoria_id })
     if (dependencia_id) query.andWhere('ticket.dependencia_id = :dependencia_id', { dependencia_id })
     if (sede_id) query.andWhere('ticket.sede_id = :sede_id', { sede_id })
-    if (tecnico_id) query.andWhere('ticket.tecnico_id = :tecnico_id', { tecnico_id })
-    if (user_id) query.andWhere('ticket.user_id = :user_id', { user_id })
 
     // Filtro por sede según rol del usuario
-    if (user.rol !== 'superadmin') {
+    if (user.rol === 'superadmin') {
+      // Superadmin ve todos los tickets
+    } else if (['admin', 'jefe_soporte', 'ingeniero_soporte'].includes(user.rol)) {
+      // Usuarios con múltiples sedes asignadas
+      const sedeIds = await this.usuarioService.getSedeIdsAcceso(user.id)
+      if (sedeIds.length > 0) {
+        query.andWhere('ticket.sede_id IN (:...sedeIds)', { sedeIds })
+      } else {
+        // Si no tiene sedes asignadas, no ve ningún ticket
+        query.andWhere('1 = 0')
+      }
+    } else {
+      // Usuarios regulares solo ven tickets de su sede
       query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
     }
 
@@ -266,6 +279,7 @@ export class TicketService {
           id: savedTicket.user.id,
           nombres: savedTicket.user.nombres,
           apellidos_paterno: savedTicket.user.apellidos_paterno,
+          apellidos_materno: savedTicket.user.apellidos_materno,
         },
       })
     }
@@ -287,6 +301,7 @@ export class TicketService {
           id: savedTicket.tecnico.id,
           nombres: savedTicket.tecnico.nombres,
           apellidos_paterno: savedTicket.tecnico.apellidos_paterno,
+          apellidos_materno: savedTicket.tecnico.apellidos_materno,
         } : null,
       })
     }
@@ -464,10 +479,9 @@ export class TicketService {
       .leftJoinAndSelect('ticket.tecnico', 'tecnico')
       .where('ticket.user_id = :userId', { userId: user.id })
 
-    // Filtro por sede según rol del usuario
-    if (user.rol !== 'superadmin') {
-      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
-    }
+    // Los usuarios pueden ver todos los tickets que crearon, independientemente de la sede
+    // Solo los superadmin pueden ver tickets de todas las sedes
+    // Los usuarios regulares solo ven sus propios tickets creados
 
     return await query
       .orderBy('ticket.created_at', 'DESC')

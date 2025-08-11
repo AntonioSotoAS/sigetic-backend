@@ -240,6 +240,7 @@ export const usuarioData = [
     telefono: '999888777',
     rol: 'superadmin',
     cargo_id: 1, // PRESIDENTE DE CORTE
+    dependencia_id: 1, // ADMINISTRACIÓN
     foto_perfil: 'public/img/foto_perfil/superadmin.jpg',
     activo: true,
   },
@@ -255,6 +256,7 @@ export const usuarioData = [
     telefono: '999888776',
     rol: 'admin',
     cargo_id: 2, // JUEZ ESPECIALIZADO 7U-4
+    dependencia_id: 2, // CONTABILIDAD
     foto_perfil: 'public/img/foto_perfil/admin.jpg',
     activo: true,
   },
@@ -268,6 +270,7 @@ export const usuarioData = [
     telefono: '999888775',
     rol: 'admin',
     cargo_id: 3, // JUEZ DE PAZ LETRADO
+    dependencia_id: 3, // RECURSOS HUMANOS
     foto_perfil: 'public/img/foto_perfil/admin_norte.jpg',
     activo: true,
   },
@@ -281,6 +284,7 @@ export const usuarioData = [
     telefono: '999888774',
     rol: 'admin',
     cargo_id: 4, // SECRETARIO DE SALA
+    dependencia_id: 4, // TECNOLOGÍA DE LA INFORMACIÓN
     foto_perfil: 'public/img/foto_perfil/admin_sur.jpg',
     activo: true,
   },
@@ -296,6 +300,7 @@ export const usuarioData = [
     telefono: '999888773',
     rol: 'jefe_soporte',
     cargo_id: 13, // ASISTENTE DE SISTEMAS
+    dependencia_id: 4, // TECNOLOGÍA DE LA INFORMACIÓN
     foto_perfil: 'public/img/foto_perfil/jefe_soporte.jpg',
     activo: true,
   },
@@ -309,6 +314,7 @@ export const usuarioData = [
     telefono: '999888784',
     rol: 'jefe_soporte',
     cargo_id: 14, // TECNICO ADMINISTRATIVO
+    dependencia_id: 13, // SOPORTE TÉCNICO
     foto_perfil: 'public/img/foto_perfil/jefe_soporte_norte.jpg',
     activo: true,
   },
@@ -318,10 +324,11 @@ export const usuarioData = [
     nombres: 'Jorge Luis',
     apellidos_paterno: 'Pérez',
     apellidos_materno: 'González',
-    dni: '33445566',
+    dni: '33445567',
     telefono: '999888785',
     rol: 'jefe_soporte',
     cargo_id: 15, // ASISTENTE ADMINISTRATIVO
+    dependencia_id: 13, // SOPORTE TÉCNICO
     foto_perfil: 'public/img/foto_perfil/jefe_soporte_sur.jpg',
     activo: true,
   },
@@ -337,6 +344,7 @@ export const usuarioData = [
     telefono: '999888779',
     rol: 'ingeniero_soporte',
     cargo_id: 16, // ASISTENTE JURISDICCIONAL DE CUSTODIA DE EXPEDIENTES Y GRABACIONES
+    dependencia_id: 13, // SOPORTE TÉCNICO
     foto_perfil: 'public/img/foto_perfil/ingeniero_soporte.jpg',
     activo: true,
   },
@@ -350,6 +358,7 @@ export const usuarioData = [
     telefono: '999888791',
     rol: 'ingeniero_soporte',
     cargo_id: 17, // ASISTENTE ADMINISTRATIVO
+    dependencia_id: 13, // SOPORTE TÉCNICO
     foto_perfil: 'public/img/foto_perfil/ingeniero_soporte_norte.jpg',
     activo: true,
   },
@@ -363,6 +372,7 @@ export const usuarioData = [
     telefono: '999888792',
     rol: 'ingeniero_soporte',
     cargo_id: 18, // ASISTENTE JURISDICCIONAL DE C.G.E.
+    dependencia_id: 13, // SOPORTE TÉCNICO
     foto_perfil: 'public/img/foto_perfil/ingeniero_soporte_sur.jpg',
     activo: true,
   },
@@ -376,6 +386,7 @@ export const usuarioData = [
     telefono: '999888793',
     rol: 'ingeniero_soporte',
     cargo_id: 19, // JUEZ SUPERIOR
+    dependencia_id: 13, // SOPORTE TÉCNICO
     foto_perfil: 'public/img/foto_perfil/ingeniero_soporte_central.jpg',
     activo: true,
   },
@@ -391,6 +402,7 @@ export const usuarioData = [
     telefono: '999888794',
     rol: 'usuario',
     cargo_id: 20, // ESPECIALISTA JUDICIAL DE AUDIENCIA DE JUZGADO
+    dependencia_id: 5, // MARKETING
     foto_perfil: 'public/img/foto_perfil/usuario.jpg',
     activo: true,
   },
@@ -404,6 +416,7 @@ export const usuarioData = [
     telefono: '999888786',
     rol: 'usuario',
     cargo_id: 21, // PERITO JUDICIAL
+    dependencia_id: 6, // VENTAS
     foto_perfil: 'public/img/foto_perfil/usuario_norte.jpg',
     activo: true,
   },
@@ -417,6 +430,7 @@ export const usuarioData = [
     telefono: '999888787',
     rol: 'usuario',
     cargo_id: 22, // ESPECIALISTA JUDICIAL DE JUZGADO
+    dependencia_id: 7, // ATENCIÓN AL CLIENTE
     foto_perfil: 'public/img/foto_perfil/usuario_sur.jpg',
     activo: true,
   },
@@ -430,6 +444,7 @@ export const usuarioData = [
     telefono: '999888788',
     rol: 'usuario',
     cargo_id: 23, // COORDINADOR I
+    dependencia_id: 8, // LOGÍSTICA
     foto_perfil: 'public/img/foto_perfil/usuario_central.jpg',
     activo: true,
   },
@@ -443,6 +458,7 @@ export const usuarioData = [
     telefono: '999888789',
     rol: 'usuario',
     cargo_id: 24, // ASISTENTE ADMINISTRATIVO II
+    dependencia_id: 9, // FINANZAS
     foto_perfil: 'public/img/foto_perfil/usuario_este.jpg',
     activo: true,
   },
@@ -456,6 +472,7 @@ export const usuarioData = [
     telefono: '999888790',
     rol: 'usuario',
     cargo_id: 25, // ESPECIALISTA JUDICIAL DE AUDIENCIA
+    dependencia_id: 10, // LEGAL
     foto_perfil: 'public/img/foto_perfil/usuario_oeste.jpg',
     activo: true,
   },
@@ -963,12 +980,12 @@ export const ticketData = [
     titulo: 'Monitor no enciende',
     descripcion: 'El monitor no muestra imagen, está completamente negro',
     categoria_id: 1, // Hardware
-    subcategoria_id: 1, // Recuperación de Cuentas
+    subcategoria_id: 2, // MONITOR
     prioridad: 'ALTA',
     estado: 'PENDIENTE',
     user_id: 13, // usuario@pj.gob.pe
     dependencia_id: 1,
-    sede_id: 1,
+    sede_id: 1, // ARCHIVO CENTRAL SAENZ PEÑA
     tecnico_id: null,
     fecha_asignacion: null,
     fecha_resolucion: null,
@@ -985,12 +1002,12 @@ export const ticketData = [
     titulo: 'Software lento',
     descripcion: 'El sistema está muy lento, tarda en responder',
     categoria_id: 2, // Software
-    subcategoria_id: 2, // Certificados
+    subcategoria_id: 16, // MI COMPUTADORA ESTÁ MUY LENTA
     prioridad: 'MEDIA',
     estado: 'ASIGNADO',
     user_id: 14, // usuario.norte@pj.gob.pe
     dependencia_id: 2,
-    sede_id: 1,
+    sede_id: 2, // SEDE CALLAO - COCHERA-CHIMBOTE
     tecnico_id: 9, // ingeniero.soporte@pj.gob.pe
     fecha_asignacion: new Date(),
     fecha_resolucion: null,
@@ -1012,12 +1029,12 @@ export const ticketData = [
     titulo: 'Impresora no funciona',
     descripcion: 'La impresora no imprime, marca error de papel',
     categoria_id: 1, // Hardware
-    subcategoria_id: 1, // Recuperación de Cuentas
+    subcategoria_id: 5, // IMPRESORA
     prioridad: 'URGENTE',
     estado: 'EN_PROCESO',
     user_id: 15, // usuario.sur@pj.gob.pe
     dependencia_id: 3,
-    sede_id: 1,
+    sede_id: 3, // SEDE CENTRAL - CHIMBOTE
     tecnico_id: 10, // ingeniero.soporte.norte@pj.gob.pe
     fecha_asignacion: new Date(),
     fecha_resolucion: null,
@@ -1039,12 +1056,12 @@ export const ticketData = [
     titulo: 'Acceso denegado',
     descripcion: 'No puedo acceder al sistema, me dice acceso denegado',
     categoria_id: 2, // Software
-    subcategoria_id: 2, // Certificados
+    subcategoria_id: 15, // MI COMPUTADORA NO ENCIENDE
     prioridad: 'ALTA',
     estado: 'RESUELTO',
     user_id: 16, // usuario.central@pj.gob.pe
     dependencia_id: 4,
-    sede_id: 1,
+    sede_id: 4, // SEDE DE CABANA
     tecnico_id: 11, // ingeniero.soporte.sur@pj.gob.pe
     fecha_asignacion: new Date(),
     fecha_resolucion: new Date(),
@@ -1066,12 +1083,12 @@ export const ticketData = [
     titulo: 'Teclado dañado',
     descripcion: 'Algunas teclas no responden',
     categoria_id: 1, // Hardware
-    subcategoria_id: 1, // Recuperación de Cuentas
+    subcategoria_id: 3, // TECLADO
     prioridad: 'BAJA',
     estado: 'CERRADO',
     user_id: 17, // usuario.este@pj.gob.pe
     dependencia_id: 5,
-    sede_id: 1,
+    sede_id: 5, // SEDE DE CASMA
     tecnico_id: 12, // ingeniero.soporte.central@pj.gob.pe
     fecha_asignacion: new Date(),
     fecha_resolucion: new Date(),
