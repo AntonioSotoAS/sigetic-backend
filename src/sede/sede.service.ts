@@ -23,7 +23,7 @@ export class SedeService {
     // Aplicar filtros
     if (search && search.trim() !== '') {
       queryBuilder.where(
-        '(sede.nombre LIKE :search OR sede.direccion LIKE :search OR sede.ciudad LIKE :search)',
+        '(sede.nombre LIKE :search OR sede.direccion LIKE :search)',
         { search: `%${search}%` }
       )
     }

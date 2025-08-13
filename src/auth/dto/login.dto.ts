@@ -1,9 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsNotEmpty, IsString, MinLength, Length } from 'class-validator'
 
 export class LoginDto {
-  @IsEmail({}, { message: 'El correo debe ser válido' })
-  @IsNotEmpty({ message: 'El correo es requerido' })
-  correo: string
+  @IsString({ message: 'El DNI debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'El DNI es requerido' })
+  @Length(8, 8, { message: 'El DNI debe tener exactamente 8 dígitos' })
+  dni: string
 
   @IsString({ message: 'La contraseña debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'La contraseña es requerida' })

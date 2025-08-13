@@ -12,9 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         // Extraer de cookies (prioridad para Next.js)
         (req: Request) => {
-          console.log('🍪 JWT Strategy - Cookies recibidas:', req?.cookies)
           const token = req?.cookies?.access_token || req?.cookies?.token
-          console.log('🔑 JWT Strategy - Token extraído:', token ? 'SÍ' : 'NO')
           return token
         },
         // Extraer de header Authorization (para compatibilidad)
@@ -27,7 +25,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log('🔍 JWT Strategy - Payload recibido:', payload)
     
     // Verificar que no sea un refresh token
     if (payload.type === 'refresh') {
@@ -42,7 +39,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return null
     }
     
-    console.log('✅ JWT Strategy - Usuario validado:', usuario.nombres)
     
     // Agregar información adicional al payload
     return {

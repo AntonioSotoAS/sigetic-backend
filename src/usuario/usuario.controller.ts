@@ -15,6 +15,7 @@ import {
   import { UpdateUsuarioDto } from './dto/update-usuario.dto'
   import { FilterUsuarioDto } from './dto/filter-usuario.dto'
   import { UpdatePasswordDto } from './dto/update-password.dto'
+import { UpdateLocationDto } from './dto/update-location.dto'
 import { JwtAuthGuard } from '../auth/jwt.guard'
 import { GetUser } from '../common/decorators/get-user.decorator'
 import { Usuario } from './entities/usuario.entity'
@@ -77,6 +78,47 @@ import { ApiBearerAuth, ApiQuery, ApiTags, ApiOperation, ApiResponse } from '@ne
       })
       
       return this.usuarioService.updatePassword(user.id, dto)
+    }
+
+    @Patch('update-location')
+    @ApiOperation({ summary: 'Actualizar sede y dependencia del usuario autenticado' })
+    @ApiResponse({ 
+      status: 200, 
+      description: 'Ubicación actualizada exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Ubicación actualizada exitosamente' },
+          success: { type: 'boolean', example: true },
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'number', example: 1 },
+              sede_id: { type: 'number', example: 1 },
+              dependencia_id: { type: 'number', example: 1 }
+            }
+          }
+        }
+      }
+    })
+    @ApiResponse({ status: 400, description: 'Datos inválidos o no se proporcionaron campos para actualizar' })
+    @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+    updateLocation(
+      @Body() dto: UpdateLocationDto,
+      @GetUser() user: Usuario,
+    ) {
+      console.log('📍 CONTROLLER - updateLocation llamado')
+      console.log('📍 CONTROLLER - User:', {
+        id: user.id,
+        nombres: user.nombres,
+        correo: user.correo
+      })
+      console.log('📍 CONTROLLER - DTO recibido:', {
+        sede_id: dto.sede_id,
+        dependencia_id: dto.dependencia_id
+      })
+      
+      return this.usuarioService.updateLocation(user.id, dto)
     }
 
     @Get('sedes-soporte')

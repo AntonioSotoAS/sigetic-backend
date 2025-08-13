@@ -50,12 +50,11 @@ export class TicketService {
       .leftJoinAndSelect('ticket.subcategoria', 'subcategoria')
       .leftJoinAndSelect('ticket.user', 'user')
       .leftJoinAndSelect('ticket.tecnico', 'tecnico')
-      .where('ticket.activo = :activo', { activo: true })
 
     // Filtro por búsqueda
     if (search) {
       query.andWhere(
-        '(ticket.titulo ILIKE :search OR ticket.descripcion ILIKE :search)',
+        '(ticket.titulo LIKE :search OR ticket.descripcion LIKE :search)',
         { search: `%${search}%` }
       )
     }
@@ -82,7 +81,12 @@ export class TicketService {
       }
     } else {
       // Usuarios regulares solo ven tickets de su sede
-      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+      if (user.sede?.id) {
+        query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+      } else {
+        // Si no tiene sede asignada, no ve ningún ticket
+        query.andWhere('1 = 0')
+      }
     }
 
     const [data, total] = await query
@@ -116,7 +120,7 @@ export class TicketService {
     if (!ticket) throw new NotFoundException('Ticket no encontrado')
 
     // Verificar acceso según rol
-    if (user.rol !== 'superadmin' && ticket.sede.id !== user.sede.id) {
+    if (user.rol !== 'superadmin' && ticket.sede.id !== user.sede?.id) {
       throw new NotFoundException('Ticket no encontrado')
     }
 
@@ -315,47 +319,51 @@ export class TicketService {
     await this.repo.remove(ticket)
   }
 
-  // ✅ Obtener tickets sin asignar de mi sede
-  async findSinAsignarMiSede(user: Usuario): Promise<Ticket[]> {
-    console.log('🔍 findSinAsignarMiSede - Usuario:', {
+  // ✅ Obtener tickets sin asignar de las sedes que soporta el usuario
+  async findSinAsignarMiSede(user: Usuario, search?: string): Promise<Ticket[]> {
+    console.log('🔍 SIN ASIGNAR MI SEDE - Iniciando búsqueda...')
+    console.log('🔍 SIN ASIGNAR MI SEDE - Usuario:', {
       id: user.id,
       nombres: user.nombres,
       rol: user.rol,
-      sedeId: user.sede?.id,
-      sedeNombre: user.sede?.nombre
+      sede_soporte: user.sede_soporte
     })
 
-    const query = this.repo.createQueryBuilder('ticket')
-      .leftJoinAndSelect('ticket.user', 'user')
-      .leftJoinAndSelect('ticket.dependencia', 'dependencia')
-      .leftJoinAndSelect('ticket.sede', 'sede')
-      .leftJoinAndSelect('ticket.categoria', 'categoria')
-      .leftJoinAndSelect('ticket.subcategoria', 'subcategoria')
-      .where('ticket.tecnico_id IS NULL')
-      .andWhere('ticket.estado IN (:...estados)', { 
-        estados: [EstadoTicket.PENDIENTE, EstadoTicket.ASIGNADO] 
-      })
-
-    // Filtro por sede del usuario (todos los roles ven solo su sede)
-    query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
-    console.log('🔍 findSinAsignarMiSede - Filtro por sede aplicado:', user.sede.id)
-
-    const tickets = await query
-      .orderBy('ticket.prioridad', 'DESC')
-      .addOrderBy('ticket.created_at', 'ASC')
-      .getMany()
+    // Obtener las sedes que el usuario soporta
+    const sedeIds = await this.usuarioService.getSedeIdsAcceso(user.id)
     
-    console.log('🔍 findSinAsignarMiSede - Tickets encontrados:', tickets.length)
-    
-    if (tickets.length > 0) {
-      console.log('🔍 findSinAsignarMiSede - Primer ticket:', {
-        id: tickets[0].id,
-        titulo: tickets[0].titulo,
-        sedeId: tickets[0].sede?.id,
-        tecnicoId: tickets[0].tecnico?.id
-      })
+    console.log('🔍 SIN ASIGNAR MI SEDE - Sedes de acceso:', sedeIds)
+
+    if (sedeIds.length === 0) {
+      console.log('🔍 SIN ASIGNAR MI SEDE - No hay sedes asignadas, retornando array vacío')
+      return []
     }
 
+    // Construir la consulta
+    const query = this.repo.createQueryBuilder('ticket')
+      .leftJoinAndSelect('ticket.sede', 'sede')
+      .leftJoinAndSelect('ticket.dependencia', 'dependencia')
+      .leftJoinAndSelect('ticket.categoria', 'categoria')
+      .leftJoinAndSelect('ticket.subcategoria', 'subcategoria')
+      .leftJoinAndSelect('ticket.user', 'user')
+      .leftJoinAndSelect('ticket.tecnico', 'tecnico')
+      .where('ticket.sede_id IN (:...sedeIds)', { sedeIds })
+      .andWhere('ticket.tecnico_id IS NULL') // Solo tickets sin asignar
+
+    // Aplicar filtro de búsqueda si se proporciona
+    if (search && search.trim() !== '') {
+      query.andWhere(
+        '(ticket.titulo LIKE :search OR ticket.descripcion LIKE :search)',
+        { search: `%${search}%` }
+      )
+    }
+
+    const tickets = await query
+      .orderBy('ticket.created_at', 'DESC')
+      .getMany()
+
+    console.log('🔍 SIN ASIGNAR MI SEDE - Tickets encontrados:', tickets.length)
+    
     return tickets
   }
 
@@ -380,8 +388,13 @@ export class TicketService {
 
     // Filtro por sede según rol del usuario
     if (user.rol !== 'superadmin') {
-      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
-      console.log('🔍 findSinAsignar - Filtro por sede aplicado:', user.sede.id)
+      if (user.sede?.id) {
+        query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+        console.log('🔍 findSinAsignar - Filtro por sede aplicado:', user.sede.id)
+      } else {
+        console.log('🔍 findSinAsignar - Usuario sin sede asignada')
+        query.andWhere('1 = 0')
+      }
     } else {
       console.log('🔍 findSinAsignar - Superadmin, sin filtro de sede')
     }
@@ -427,8 +440,13 @@ export class TicketService {
 
     // Filtro por sede según rol del usuario
     if (user.rol !== 'superadmin') {
-      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
-      console.log('🔍 findTicketsAsignados - Filtro por sede aplicado:', user.sede.id)
+      if (user.sede?.id) {
+        query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+        console.log('🔍 findTicketsAsignados - Filtro por sede aplicado:', user.sede.id)
+      } else {
+        console.log('🔍 findTicketsAsignados - Usuario sin sede asignada')
+        query.andWhere('1 = 0')
+      }
     } else {
       console.log('🔍 findTicketsAsignados - Superadmin, sin filtro de sede')
     }
@@ -460,7 +478,11 @@ export class TicketService {
 
     // Filtro por sede según rol del usuario
     if (user.rol !== 'superadmin') {
-      query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+      if (user.sede?.id) {
+        query.andWhere('ticket.sede_id = :userSedeId', { userSedeId: user.sede.id })
+      } else {
+        query.andWhere('1 = 0')
+      }
     }
 
     return await query
@@ -524,7 +546,7 @@ export class TicketService {
     console.log('🔍 DEBUG - Tickets por estado:', ticketsPorEstado)
     
     // Verificar tickets de la sede del usuario
-    if (user.sede) {
+    if (user.sede?.id) {
       const ticketsDeMiSede = await this.repo.count({
         where: { sede: { id: user.sede.id } }
       })

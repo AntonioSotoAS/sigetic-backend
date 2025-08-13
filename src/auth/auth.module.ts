@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller'
 import { UsuarioModule } from '../usuario/usuario.module'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtStrategy } from './jwt.strategy'
+import { SuperAdminGuard } from './superadmin.guard'
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { JwtStrategy } from './jwt.strategy'
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, SuperAdminGuard],
   controllers: [AuthController],
   exports: [JwtModule],
 })

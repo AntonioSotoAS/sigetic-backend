@@ -11,6 +11,9 @@ import { CreateUsuarioDto } from './dto/create-usuario.dto'
 import { UpdateUsuarioDto } from './dto/update-usuario.dto'
 import { FilterUsuarioDto } from './dto/filter-usuario.dto'
 import { UpdatePasswordDto } from './dto/update-password.dto'
+import { UpdatePasswordResponseDto } from './dto/update-password-response.dto'
+import { UpdateLocationDto } from './dto/update-location.dto'
+import { UpdateLocationResponseDto } from './dto/update-location-response.dto'
 import { PaginationDto, PaginatedResponse } from '../common/dtos/pagination.dto'
 import * as bcrypt from 'bcrypt'
 
@@ -25,6 +28,14 @@ export class UsuarioService {
   async findByCorreo(correo: string): Promise<Usuario | null> {
     return await this.repo.findOne({
       where: { correo, activo: true },
+      relations: ['sede', 'cargo', 'dependencia'],
+    })
+  }
+
+  // ✅ Login por DNI
+  async findByDni(dni: string): Promise<Usuario | null> {
+    return await this.repo.findOne({
+      where: { dni, activo: true },
       relations: ['sede', 'cargo', 'dependencia'],
     })
   }
@@ -161,7 +172,7 @@ export class UsuarioService {
   }
 
   // ✅ Actualizar contraseña del usuario
-  async updatePassword(userId: number, dto: UpdatePasswordDto): Promise<{ message: string }> {
+  async updatePassword(userId: number, dto: UpdatePasswordDto): Promise<UpdatePasswordResponseDto> {
     console.log('🔐 UPDATE PASSWORD - Iniciando actualización de contraseña...')
     console.log('🔐 UPDATE PASSWORD - User ID:', userId)
     console.log('🔐 UPDATE PASSWORD - DTO recibido:', {
@@ -216,12 +227,15 @@ export class UsuarioService {
     console.log('🔐 UPDATE PASSWORD - Actualizando contraseña en BD...')
     await this.repo.update(userId, { 
       password: hashedPassword,
-      password_resetada: true // Marcar como contraseña resetada
+      password_resetada: false // Marcar como contraseña no resetada (usuario la cambió)
     })
     console.log('✅ UPDATE PASSWORD - Contraseña actualizada exitosamente en BD')
 
     console.log('✅ UPDATE PASSWORD - Proceso completado exitosamente')
-    return { message: 'Contraseña actualizada exitosamente' }
+    return { 
+      message: 'Contraseña actualizada exitosamente',
+      success: true
+    }
   }
 
   // ✅ Obtener sedes de soporte asignadas al usuario
@@ -308,5 +322,109 @@ export class UsuarioService {
 
     // Si no tiene sedes de soporte, retornar su sede principal
     return usuario.sede ? [usuario.sede.id] : []
+  }
+
+  // ✅ Actualizar contraseña por DNI (para reset de contraseña)
+  async updatePasswordByDni(dni: string, hashedPassword: string): Promise<{ message: string }> {
+    console.log('🔐 UPDATE PASSWORD BY DNI - Iniciando actualización...')
+    console.log('🔐 UPDATE PASSWORD BY DNI - DNI:', dni)
+
+    // Buscar el usuario por DNI
+    const usuario = await this.repo.findOne({
+      where: { dni, activo: true },
+      select: ['id', 'dni']
+    })
+
+    if (!usuario) {
+      console.log('❌ UPDATE PASSWORD BY DNI - Usuario no encontrado')
+      throw new NotFoundException('Usuario no encontrado')
+    }
+
+    console.log('✅ UPDATE PASSWORD BY DNI - Usuario encontrado:', {
+      id: usuario.id,
+      dni: usuario.dni
+    })
+
+    // Actualizar la contraseña en la base de datos
+    await this.repo.update(usuario.id, { 
+      password: hashedPassword,
+      password_resetada: true // Marcar como contraseña resetada
+    })
+    
+    console.log('✅ UPDATE PASSWORD BY DNI - Contraseña actualizada exitosamente')
+
+    return { message: 'Contraseña actualizada exitosamente' }
+  }
+
+  // ✅ Actualizar sede y dependencia del usuario
+  async updateLocation(userId: number, dto: UpdateLocationDto): Promise<UpdateLocationResponseDto> {
+    console.log('📍 UPDATE LOCATION - Iniciando actualización de ubicación...')
+    console.log('📍 UPDATE LOCATION - User ID:', userId)
+    console.log('📍 UPDATE LOCATION - DTO recibido:', {
+      sede_id: dto.sede_id,
+      dependencia_id: dto.dependencia_id
+    })
+
+    // Buscar el usuario por ID
+    const usuario = await this.repo.findOne({
+      where: { id: userId, activo: true },
+      relations: ['sede', 'dependencia']
+    })
+
+    if (!usuario) {
+      console.log('❌ UPDATE LOCATION - Usuario no encontrado')
+      throw new NotFoundException('Usuario no encontrado')
+    }
+
+    console.log('✅ UPDATE LOCATION - Usuario encontrado:', {
+      id: usuario.id,
+      nombres: usuario.nombres,
+      sede_actual: usuario.sede?.id,
+      dependencia_actual: usuario.dependencia?.id
+    })
+
+    // Preparar datos para actualizar
+    const updateData: any = {}
+
+    // Actualizar sede si se proporciona
+    if (dto.sede_id !== undefined) {
+      updateData.sede_id = dto.sede_id
+      console.log('📍 UPDATE LOCATION - Actualizando sede:', dto.sede_id)
+    }
+
+    // Actualizar dependencia si se proporciona
+    if (dto.dependencia_id !== undefined) {
+      updateData.dependencia_id = dto.dependencia_id
+      console.log('📍 UPDATE LOCATION - Actualizando dependencia:', dto.dependencia_id)
+    }
+
+    // Verificar que al menos un campo se va a actualizar
+    if (Object.keys(updateData).length === 0) {
+      console.log('❌ UPDATE LOCATION - No se proporcionaron datos para actualizar')
+      throw new BadRequestException('Debe proporcionar al menos un campo para actualizar')
+    }
+
+    // Actualizar en la base de datos
+    await this.repo.update(userId, updateData)
+    
+    console.log('✅ UPDATE LOCATION - Ubicación actualizada exitosamente en BD')
+
+    // Obtener el usuario actualizado para la respuesta
+    const usuarioActualizado = await this.repo.findOne({
+      where: { id: userId, activo: true },
+      relations: ['sede', 'dependencia']
+    })
+
+    console.log('✅ UPDATE LOCATION - Proceso completado exitosamente')
+    
+    return {
+      message: 'Ubicación actualizada exitosamente',
+      success: true,
+      user: {
+        id: usuarioActualizado!.id,
+        sede_id: usuarioActualizado!.sede?.id,
+        dependencia_id: usuarioActualizado!.dependencia?.id
+      }
+    }
   }
 }

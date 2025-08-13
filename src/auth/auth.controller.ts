@@ -13,7 +13,9 @@ import {
 import { AuthService } from './auth.service'
 import { Response, Request } from 'express'
 import { JwtAuthGuard } from './jwt.guard'
+import { SuperAdminGuard } from './superadmin.guard'
 import { LoginDto } from './dto/login.dto'
+import { ResetPasswordDto } from './dto/reset-password.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -25,10 +27,10 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.login(loginDto.correo, loginDto.password)
+    const result = await this.authService.login(loginDto.dni, loginDto.password)
     
     console.log('✅ Login exitoso:', {
-      correo: loginDto.correo,
+      dni: loginDto.dni,
       usuario: result.user.nombres,
       rol: result.user.rol,
       sede: result.user.sede?.nombre
@@ -141,6 +143,62 @@ export class AuthController {
         success: false,
         message: 'Token de refresco inválido'
       }
+    }
+  }
+
+  @Get('token')
+  @HttpCode(HttpStatus.OK)
+  async getToken(@Req() req: Request) {
+    // Leer el token de las cookies httpOnly
+    const accessToken = req.cookies?.access_token || req.cookies?.token
+    
+    if (!accessToken) {
+      return {
+        success: false,
+        message: 'No se encontró token de autenticación',
+        token: null
+      }
+    }
+
+    try {
+      // Verificar que el token sea válido
+      const payload = this.authService.verifyToken(accessToken)
+      
+      return {
+        success: true,
+        message: 'Token obtenido exitosamente',
+        token: accessToken,
+        user: {
+          id: payload.sub,
+          rol: payload.rol,
+          sedeId: payload.sedeId,
+          correo: payload.correo
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Token inválido o expirado',
+        token: null
+      }
+    }
+  }
+
+  @Post('reset-password')
+  @UseGuards(SuperAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const result = await this.authService.resetPassword(resetPasswordDto.dni)
+    
+    console.log('✅ Reset de contraseña exitoso:', {
+      dni: resetPasswordDto.dni,
+      nuevaContraseña: result.newPassword
+    })
+    
+    return {
+      message: result.message,
+      success: true,
+      newPassword: result.newPassword
     }
   }
 }

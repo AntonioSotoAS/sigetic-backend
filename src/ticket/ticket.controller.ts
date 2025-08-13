@@ -38,8 +38,8 @@ export class TicketController {
   }
 
   @Get('sin-asignar-mi-sede')
-  findSinAsignarMiSede(@GetUser() user: Usuario) {
-    return this.ticketService.findSinAsignarMiSede(user)
+  findSinAsignarMiSede(@GetUser() user: Usuario, @Query('search') search?: string) {
+    return this.ticketService.findSinAsignarMiSede(user, search)
   }
 
   @Get('mis-tickets')
