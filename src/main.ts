@@ -12,9 +12,9 @@ async function bootstrap() {
   const config = app.get(ConfigService)
   const jwt = app.get(JwtService)
 
-  // Configurar CORS para permitir peticiones desde localhost:3000
+  // Configurar CORS para permitir peticiones desde cualquier origen
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'],
+    origin: true, // Permite cualquier origen
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
